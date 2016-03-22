@@ -203,7 +203,7 @@ confusionMatrix(validation$classe, predict)
 As we can see the out-of-sample accuracy of the selected model is coming as 98.48% which is higher than what we intended to achieve and hence we will not perform any further exercise of model fitting and proceed to test this model on out testing data set. The out-of-sample error rate for this model is thus 1.52%.
 
 ## Model Prediction
-We will use the testing data set provided earlier to predict the class using the selected model.
+We will use the testing data set provided earlier to predict the class using the selected model. The predicted class for each of the testing data observation is presented below.
 
 ```r
 testing_subset <- testing[, grepl("^roll|^pitch|^yaw|problem_id", names(testing))]
@@ -235,4 +235,3 @@ table(testing_subset$problem_id, testing_subset$classe)
 ##   19 0 1 0 0 0
 ##   20 0 1 0 0 0
 ```
-The predicted class for each of the testing data observation is presented above.

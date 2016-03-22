@@ -271,7 +271,7 @@ confusionMatrix(validation$classe, predict)</code></pre>
 </div>
 <div id="model-prediction" class="section level2">
 <h2>Model Prediction</h2>
-<p>We will use the testing data set provided earlier to predict the class using the selected model.</p>
+<p>We will use the testing data set provided earlier to predict the class using the selected model. The predicted class for each of the testing data observation is presented below.</p>
 <pre class="r"><code>testing_subset &lt;- testing[, grepl(&quot;^roll|^pitch|^yaw|problem_id&quot;, names(testing))]
 testing_subset$classe &lt;- predict(model, newdata=testing_subset)
 table(testing_subset$problem_id, testing_subset$classe)</code></pre>
@@ -297,7 +297,6 @@ table(testing_subset$problem_id, testing_subset$classe)</code></pre>
 ##   18 0 1 0 0 0
 ##   19 0 1 0 0 0
 ##   20 0 1 0 0 0</code></pre>
-<p>The predicted class for each of the testing data observation is presented above. </p>
 </div>
 
 
