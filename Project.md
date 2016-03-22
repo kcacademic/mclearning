@@ -99,7 +99,7 @@ testing <- testing[, !grepl("kurtosis|skewness|max|min|amplitude|var|avg|stddev"
 ```
 
 ## Data Slicing
-We will now create training and validation sets out of the raw raining set. We will set the seed for the purpose of reproducibility.
+We will now create training and validation sets out of the raw training set. We will set the seed for the purpose of reproducibility.
 
 ```r
 set.seed(331)
@@ -123,10 +123,12 @@ featurePlot(x=training_subset[,!(names(training_subset) %in% c("classe"))], y=tr
 
 ![](Project_files/figure-html/unnamed-chunk-9-1.png)
 
-We will now perform the model fitting.
+We will now perform the model fitting. We will also use a 10 fold cross validation as part of model fitting using random forest along with number of trees set to 500 for optimal coverage.
 
 ```r
-model <- train(classe~., data=training_subset, method="rf")
+model <- train(classe~., data=training_subset, method="rf", 
+               trControl = trainControl(method = "cv", 10), 
+               ntree = 500)
 ```
 Let us see what the fitted model looks like.
 
@@ -142,19 +144,19 @@ model
 ##     5 classes: 'A', 'B', 'C', 'D', 'E' 
 ## 
 ## No pre-processing
-## Resampling: Bootstrapped (25 reps) 
-## Summary of sample sizes: 11776, 11776, 11776, 11776, 11776, 11776, ... 
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 10598, 10597, 10599, 10599, 10598, 10598, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-##    2    0.9775685  0.9716436  0.003240003  0.004085993
-##    7    0.9765878  0.9704086  0.002741863  0.003451831
-##   12    0.9683545  0.9600026  0.003697838  0.004658410
+##    2    0.9841193  0.9799112  0.005068902  0.006413839
+##    7    0.9833546  0.9789460  0.005104747  0.006459118
+##   12    0.9793631  0.9738985  0.005454073  0.006898387
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 2.
 ```
-The in-sample accuracy for the selected final model is 97.7% and the in-sample error rate is 2.3%.
+The in-sample accuracy for the selected final model is 98.41% and the in-sample error rate is 1.59%.
 
 ## Model Evaluation
 We will now use the validation data set to check the accuracy of the selected model.
@@ -170,35 +172,35 @@ confusionMatrix(validation$classe, predict)
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 2219    5    5    3    0
-##          B   21 1465   28    4    0
-##          C    0    8 1344   15    1
-##          D    2    2    8 1274    0
-##          E    0    1   12    6 1423
+##          A 2217    5    5    3    2
+##          B   19 1469   26    4    0
+##          C    0    9 1342   16    1
+##          D    1    2    9 1274    0
+##          E    0    2   11    4 1425
 ## 
 ## Overall Statistics
 ##                                           
-##                Accuracy : 0.9846          
-##                  95% CI : (0.9816, 0.9872)
-##     No Information Rate : 0.2858          
+##                Accuracy : 0.9848          
+##                  95% CI : (0.9819, 0.9874)
+##     No Information Rate : 0.2851          
 ##     P-Value [Acc > NIR] : < 2.2e-16       
 ##                                           
-##                   Kappa : 0.9805          
-##  Mcnemar's Test P-Value : NA              
+##                   Kappa : 0.9808          
+##  Mcnemar's Test P-Value : 9.648e-06       
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9897   0.9892   0.9621   0.9785   0.9993
-## Specificity            0.9977   0.9917   0.9963   0.9982   0.9970
-## Pos Pred Value         0.9942   0.9651   0.9825   0.9907   0.9868
-## Neg Pred Value         0.9959   0.9975   0.9918   0.9957   0.9998
-## Prevalence             0.2858   0.1888   0.1781   0.1659   0.1815
-## Detection Rate         0.2828   0.1867   0.1713   0.1624   0.1814
+## Sensitivity            0.9911   0.9879   0.9634   0.9792   0.9979
+## Specificity            0.9973   0.9923   0.9960   0.9982   0.9974
+## Pos Pred Value         0.9933   0.9677   0.9810   0.9907   0.9882
+## Neg Pred Value         0.9964   0.9972   0.9921   0.9959   0.9995
+## Prevalence             0.2851   0.1895   0.1775   0.1658   0.1820
+## Detection Rate         0.2826   0.1872   0.1710   0.1624   0.1816
 ## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
-## Balanced Accuracy      0.9937   0.9904   0.9792   0.9883   0.9982
+## Balanced Accuracy      0.9942   0.9901   0.9797   0.9887   0.9976
 ```
-As we can see the out-of-sample accuracy of the selected model is coming as 98.46% which is higher than what we intended to achieve and hence we will not perform any further exercise of model fitting and proceed to test this model on out testing data set. The out-of-sample error rate for this model is thus 1.54%.
+As we can see the out-of-sample accuracy of the selected model is coming as 98.48% which is higher than what we intended to achieve and hence we will not perform any further exercise of model fitting and proceed to test this model on out testing data set. The out-of-sample error rate for this model is thus 1.52%.
 
 ## Model Prediction
 We will use the testing data set provided earlier to predict the class using the selected model.

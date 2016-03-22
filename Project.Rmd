@@ -58,7 +58,7 @@ testing <- testing[, !grepl("kurtosis|skewness|max|min|amplitude|var|avg|stddev"
 ```
 
 ## Data Slicing
-We will now create training and validation sets out of the raw raining set. We will set the seed for the purpose of reproducibility.
+We will now create training and validation sets out of the raw training set. We will set the seed for the purpose of reproducibility.
 ```{r}
 set.seed(331)
 inTrain = createDataPartition(training_full$classe, p = 0.6)[[1]]
@@ -77,15 +77,17 @@ Let’s create a pair plot of the selected covariates to see if the choice is go
 featurePlot(x=training_subset[,!(names(training_subset) %in% c("classe"))], y=training_subset$classe, plot="pairs")
 ```
 
-We will now perform the model fitting.
+We will now perform the model fitting. We will also use a 10 fold cross validation as part of model fitting using random forest along with number of trees set to 500 for optimal coverage.
 ```{r cache=TRUE, warning=FALSE, message=FALSE}
-model <- train(classe~., data=training_subset, method="rf")
+model <- train(classe~., data=training_subset, method="rf", 
+               trControl = trainControl(method = "cv", 10), 
+               ntree = 500)
 ```
 Let us see what the fitted model looks like.
 ```{r}
 model
 ```
-The in-sample accuracy for the selected final model is 97.7% and the in-sample error rate is 2.3%.
+The in-sample accuracy for the selected final model is 98.41% and the in-sample error rate is 1.59%.
 
 ## Model Evaluation
 We will now use the validation data set to check the accuracy of the selected model.
@@ -94,7 +96,7 @@ validation_subset <- validation[, grepl("^roll|^pitch|^yaw|classe", names(valida
 predict <- predict(model, newdata=validation_subset)
 confusionMatrix(validation$classe, predict)
 ```
-As we can see the out-of-sample accuracy of the selected model is coming as 98.46% which is higher than what we intended to achieve and hence we will not perform any further exercise of model fitting and proceed to test this model on out testing data set. The out-of-sample error rate for this model is thus 1.54%.
+As we can see the out-of-sample accuracy of the selected model is coming as 98.48% which is higher than what we intended to achieve and hence we will not perform any further exercise of model fitting and proceed to test this model on out testing data set. The out-of-sample error rate for this model is thus 1.52%.
 
 ## Model Prediction
 We will use the testing data set provided earlier to predict the class using the selected model.
