@@ -1,0 +1,99 @@
+---
+title: "Statistical Prediction Model for Human Acitivy Recognition using Weight Lifting Exercise Dataset"
+author: "Kumar Chandrakant"
+date: "March 17, 2016"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+The objective of this report is to present a statistical model build on top of the Weight Lifting Exercise Dataset collected from accelerometers on the belt, forearm, arm, and dumbbell of 6 participants. The objective of this exercise if to predict how well individuals perform a benchmarked activity like lifting a dumbbell. We will be using the raw data provided at the course site and perform relevant exploratory analysis to decide on the features to retain as predictors. We will then proceed to model fitting, evaluation and eventually prediction for the provided test set.
+
+## Base Setup
+We will make use of the functions from caret package in report and hence loading it.
+```{r warning=FALSE, message=FALSE}
+library(caret)
+```
+
+## Data Loading
+We begin by downloading the raw dataset provided as part of the assignment. The downloaded datasets are then read into the environment.
+```{r cache=TRUE}
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "./data/pml-training.csv")
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", "./data/pml-testing.csv")
+training_full <- read.csv("./data/pml-training.csv")
+testing <- read.csv("./data/pml-testing.csv")
+```
+
+## Exploratory Analysis
+We perform some exploratory analysis of the data to understand what features to keep for model fitting. We begin by looking into the dimension of the data.
+```{r}
+dim(training_full)
+```
+We know now that our training dataset consists of 19622 observations and 160 variables out of which 159 are predictors. That’s a huge number of predictors! Obviously not all of these would be appropriate for the purpose of model fitting.
+
+A quick read through the documentation of data present at (http://groupware.les.inf.puc-rio.br/har) it is evident that data is collected from sensors at four locations i.e. dumbbell, forearm, arm and belt. Let us see what the predictors available are for each of them.
+```{r}
+grep("dumbbell", names(training_full), value = TRUE)
+```
+As we can see there are 38 predictors available for each of these locations but not all of these are raw covariates.
+```{r}
+grep("kurtosis|skewness|max|min|amplitude|var|avg|stddev", grep("dumbbell", names(training_full), value = TRUE), value = TRUE)
+```
+As we can see out of these 38 covariates 25 are not raw which leaves 13 covariates as raw covariates for each location.
+
+## Approach
+We will begin by slicing the raw training data set into training and validation sets. We will keep 60% for training and rest for validation. Based on the exploratory analysis of the covariates we will begin by including only some of the covariates and proceed with model fitting and validation. Based on the accuracy achieved we will include or replace covariates. Our intention is to achieve an accuracy of at least 98%.
+
+## Data Cleaning
+Let us begin by retaining only the raw covariates and the predicted variable in training and testing data sets.
+```{r}
+training_full <- training_full[, grepl("dumbbell|belt|forearm|arm|classe", names(training_full))]
+training_full <- training_full[, !grepl("kurtosis|skewness|max|min|amplitude|var|avg|stddev", names(training_full))]
+testing <- testing[, grepl("dumbbell|belt|forearm|arm|problem_id", names(testing))]
+testing <- testing[, !grepl("kurtosis|skewness|max|min|amplitude|var|avg|stddev", names(testing))]
+```
+
+## Data Slicing
+We will now create training and validation sets out of the raw raining set. We will set the seed for the purpose of reproducibility.
+```{r}
+set.seed(331)
+inTrain = createDataPartition(training_full$classe, p = 0.6)[[1]]
+training = training_full[ inTrain,]
+validation = training_full[-inTrain,]
+```
+
+## Model Fitting
+We will use random forest as our method due to the fact that it can automatically pick the most relevant predictors out of the provided ones and normally gives high level of accuracy for this kind of classification problem. As fitting a model with random forest is computationally expensive we will begin with a subset of originally selected covariates.
+```{r}
+training_subset <- training[, grepl("^roll|^pitch|^yaw|classe", names(training))]
+```
+
+Let’s create a pair plot of the selected covariates to see if the choice is good.
+```{r cache=TRUE}
+featurePlot(x=training_subset[,!(names(training_subset) %in% c("classe"))], y=training_subset$classe, plot="pairs")
+```
+
+We will now perform the model fitting.
+```{r cache=TRUE, warning=FALSE, message=FALSE}
+model <- train(classe~., data=training_subset, method="rf")
+```
+
+## Model Evaluation
+We will now use the validation data set to check the accuracy of the selected model.
+```{r warning=FALSE, message=FALSE}
+validation_subset <- validation[, grepl("^roll|^pitch|^yaw|classe", names(validation))]
+predict <- predict(model, newdata=validation_subset)
+confusionMatrix(validation$classe, predict)
+```
+As we can see the overall accuracy of the selected model is coming as 98.46% which is higher than what we intended to achieve and hence we will not perform any further exercise of model fitting and proceed to test this model on out testing data set.
+
+## Model Prediction
+We will use the testing data set provided earlier to predict the class using the selected model.
+```{r}
+testing_subset <- testing[, grepl("^roll|^pitch|^yaw|problem_id", names(testing))]
+testing_subset$classe <- predict(model, newdata=testing_subset)
+table(testing_subset$problem_id, testing_subset$classe)
+```
+The predicted class for each of the testing data observation is presented above.
